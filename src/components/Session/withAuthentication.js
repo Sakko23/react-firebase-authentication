@@ -1,4 +1,5 @@
 import React from 'react';
+
 import AuthUserContext from './context';
 import { withFirebase } from '../Firebase';
 
@@ -8,52 +9,27 @@ const withAuthentication = Component => {
             super(props);
 
             this.state = {
-                authUser: null,
+                authUser: JSON.parse(localStorage.getItem('authUser')),
             };
         }
+
         componentDidMount() {
             this.listener = this.props.firebase.onAuthUserListener(
                 authUser => {
+                    localStorage.setItem('authUser', JSON.stringify(authUser));
                     this.setState({ authUser });
                 },
                 () => {
+                    localStorage.removeItem('authUser');
                     this.setState({ authUser: null });
                 },
             );
-            /*
-            this.listener = this.props.firebase.auth.onAuthStateChanged(
-                authUser => {
-                    if (authUser) {
-                        this.props.firebase
-                            .user(authUser.uid)
-                            .once('value')
-                            .then(snapshot => {
-                                const dbUser = snapshot.val();
-
-                                // default empty roles
-                                if (!dbUser.roles) {
-                                    dbUser.roles = {};
-                                }
-
-                                // merge auth and db user
-                                authUser = {
-                                    uid: authUser.uid,
-                                    email: authUser.email,
-                                    ...dbUser,
-                                };
-
-                                this.setState({ authUser });
-                            });
-                    } else {
-                        this.setState({ authUser: null });
-                    }
-                },
-            );*/
         }
 
         componentWillUnmount() {
             this.listener();
         }
+
         render() {
             return (
                 <AuthUserContext.Provider value={this.state.authUser}>
